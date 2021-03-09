@@ -23,6 +23,8 @@ class Model {
     this.tablename = tablename;
   }
 
+
+
   /**
    * Gets all records in the table matching the specified conditions.
    * @param {Object} options - An object where the keys are column names and the

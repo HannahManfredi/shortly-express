@@ -5,6 +5,7 @@ module.exports = (db) => {
     db = Promise.promisifyAll(db);
   }
   // Create links table
+  //nodemon test file change with comments
   return db.queryAsync(`
     CREATE TABLE IF NOT EXISTS links (
       id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
