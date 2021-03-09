@@ -87,52 +87,42 @@ app.post('/signup',
     let options = {};
     options.username = req.body.username;
     options.password = req.body.password;
-    return models.Users.get(options)
+    return models.Users.get({username: req.body.username})
       .then((data) => {
-        console.log('data from get: ', data);
-        // console.log('inside then');
         if (data === undefined) {
           return models.Users.create(options)
             .then(() => {
-              res.sendStatus(201);
+              res.redirect(201, '/');
               res.end();
             })
             .catch((err) => {
               res.status(500).send(err);
             });
-        } else if (data !== undefined) {
-          console.log('data on the outsie');
-          //redirect to '/signup'
-          // app.get('/signup');git 
-          // res.redirect('/signup');
-          // res.writeHead('/signup');
-          //http redirect
-          window.location = 'http://localhost4568/signup'; //javascript redirect
+        } else if (data) {
+          res.redirect('/signup');
           res.end();
         }
       })
       .catch((err) => {
         if (err) { throw err; }
-        console.log('inside here');
       });
   });
 
 app.post('/login',
   (req, res) => {
-    console.log('req', req);
-    console.log('req.body', req.body);
-    //user enters username and password
-    //query/send that info to our database
-    //check if password inputted matches password stored for that username
-    //if it matches
-    //that person is logged in and weshow them their account/some other page
-    //if it doesn't match
-    //tell them that username or password incorrect
-    //clear attempt lines
-    //make record of how many times attempted
-    //lock them out if it's too many attempts
-    //forgot password
-    //redirect signup page
+    return models.Users.get({username: req.body.username})
+      .then((data) => {
+        if (!data) {
+          res.redirect(201, '/login');
+        } else if (data) {
+          let loginIsCorrect = models.Users.compare(req.body.password, data.password, data.salt);
+          if (loginIsCorrect) {
+            res.redirect(201, '/');
+          } else {
+            res.redirect(201, '/login');
+          }
+        }
+      });
   });
 
 /************************************************************/
