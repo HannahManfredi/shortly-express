@@ -375,7 +375,6 @@ describe('', function() {
         var requestWithoutCookies = httpMocks.createRequest();
         var response = httpMocks.createResponse();
         createSession(requestWithoutCookies, response, function() {
-          console.log('session: ', requestWithoutCookies.session);
           var session = requestWithoutCookies.session;
           expect(session).to.exist;
           expect(session).to.be.an('object');

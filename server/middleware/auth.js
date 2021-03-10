@@ -2,23 +2,36 @@ const models = require('../models');
 const Promise = require('bluebird');
 
 module.exports.createSession = (req, res, next) => {
+  console.log('req line 5: ', req);
   console.log('req.cookies: ', req.cookies );
-  if (req.cookies === {}) {
+  if (JSON.stringify(req.cookies) === '{}') {
     console.log('inside if');
-    //'initializes a new session when there are no cookies on the request'
-    let session = new models.Session();
-    console.log(session);
-    return session.create()
-      .then( () => {
-        res.end();
+    return models.Sessions.create()
+      .then( (data) => {
+        //check if a session already exists
+        if (req.session) {
+
+        }
+        req.session = {};
+        return models.Sessions.get({id: data.insertId})
+          .then( (data) => {
+            req.session.hash = data.hash;
+            // let x = data[cookies];
+            console.log('req.session: ', req.session);
+            //where does the string 'shortlyid' exist?
+            res.cookie('shortlyid', data.hash);
+            next();
+          })
+          .catch( (err) => {
+            throw (err);
+          });
       })
       .catch( (err) => {
         throw (err);
       });
+  } else {
+
   }
-
-  //'sets a new cookie on the response when a session is initialized'
-
 };
 
 /************************************************************/
@@ -27,6 +40,3 @@ module.exports.createSession = (req, res, next) => {
 
 
 
-//'assigns a session object to the request if a session already exists'
-//'creates a new hash for each new session'
-//'assigns a username and userId property to the session object if the session is assigned to a user'
