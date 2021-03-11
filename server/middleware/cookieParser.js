@@ -1,7 +1,7 @@
 const parseCookies = (req, res, next) => {
   let cookieObject = {};
   if (!req.headers.cookie) {
-    req.cookies = cookieObject; //{}
+    req.cookies = cookieObject;
     next();
   } else {
     let copyOfCookiesString = req.headers.cookie.slice();
