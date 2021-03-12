@@ -3,17 +3,16 @@ const Promise = require('bluebird');
 
 module.exports.createSession = (req, res, next) => {
   console.log('req line 5: ', req.cookies);
+  console.log('header cookie: ', req.headers);
   if (JSON.stringify(req.cookies) === '{}') {
     return models.Sessions.create()
       .then( (data) => {
         console.log('data line 8: ', data);
         req.session = {};
         return models.Sessions.get({ id: data.insertId })
-          .then((data) => {
-            let keys = Object.keys(req.cookies);
-            let cookieHash = keys[0];
-            req.session.hash = data.hash;
-            res.cookie(cookieHash, data.hash);
+          .then((dataFromGet) => {
+            req.session.hash = dataFromGet.hash;
+            res.cookie('shortlyid', dataFromGet.hash);
             next();
           })
           .catch((err) => {
@@ -46,7 +45,7 @@ module.exports.createSession = (req, res, next) => {
             })
             .catch( (err) => {
               throw (err);
-            })
+            });
         } else {
           let idWeNeed = data.id;
           return models.Sessions.update({hash: session.hash}, {userId: data.id})
@@ -76,7 +75,7 @@ module.exports.createSession = (req, res, next) => {
       .catch( (err) => {
         throw (err);
       });
-      next();
+    next();
   }
 };
 
