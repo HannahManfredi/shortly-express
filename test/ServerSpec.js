@@ -40,7 +40,7 @@ describe('', function() {
     /*************************************************************************************/
     db = mysql.createConnection({
       user: 'root',
-      password: '',
+      password: 'student',
       database: 'shortly'
     });
 
@@ -479,7 +479,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Sessions and cookies', function() {
+  describe('Sessions and cookies', function() {
     var requestWithSession;
     var cookieJar;
 
@@ -503,6 +503,7 @@ describe('', function() {
       done();
     });
 
+    //deal with sessions here:
     it('saves a new session when the server receives a request', function(done) {
       requestWithSession('http://127.0.0.1:4568/', function(err, res, body) {
         if (err) { return done(err); }
@@ -515,6 +516,13 @@ describe('', function() {
         });
       });
     });
+
+    //think abt whats happening between a session and a cookie
+
+    //having dealt with sessions, now deal with cookies
+    //research web sequence diagram
+    //understand flow from (cookie to) session to cookie
+    //DIAGRAM IT OUT
 
     it('sets and stores a cookie on the client', function(done) {
       requestWithSession('http://127.0.0.1:4568/', function(error, res, body) {

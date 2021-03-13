@@ -5,6 +5,7 @@ const partials = require('express-partials');
 const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
 const models = require('./models');
+const cookieParser = require('./middleware/cookieParser.js');
 
 const app = express();
 
@@ -14,24 +15,26 @@ app.use(partials());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
-app.use(express.static(path.join(__dirname, './middleware/cookieParser')));
-app.use(express.static(path.join(__dirname, './middleware/auth.js')));
+
+let sessionCreator = function (req, res, next) {
+  Auth.createSession(req, res, next);
+};
+
+let cookies = function (req, res, next) {
+  cookieParser(req, res, next);
+};
+
+app.use(cookies);
+app.use(sessionCreator);
 
 app.get('/',
   (req, res) => {
     res.render('index');
   });
 
-//just a theory—maybe this fixes failing 1st test?
-// app.get('/users',
-//   (req, res) => {
-//     res.render('index');
-//   });
-
-app.get('/create',
-  (req, res) => {
-    res.render('index');
-  });
+app.get('/create', (req, res) => {
+  res.render('index');
+});
 
 app.get('/links',
   (req, res, next) => {
@@ -48,7 +51,6 @@ app.post('/links',
   (req, res, next) => {
     var url = req.body.url;
     if (!models.Links.isValidUrl(url)) {
-      // send back a 404 if link is not valid
       return res.sendStatus(404);
     }
 

@@ -2,12 +2,9 @@ const models = require('../models');
 const Promise = require('bluebird');
 
 module.exports.createSession = (req, res, next) => {
-  console.log('req line 5: ', req.cookies);
-  console.log('header cookie: ', req.headers);
   if (JSON.stringify(req.cookies) === '{}') {
     return models.Sessions.create()
       .then( (data) => {
-        console.log('data line 8: ', data);
         req.session = {};
         return models.Sessions.get({ id: data.insertId })
           .then((dataFromGet) => {
@@ -24,19 +21,25 @@ module.exports.createSession = (req, res, next) => {
       });
   } else {
     let session = {};
-    let keys = Object.keys(req.cookies);
-    let cookieHash = keys[0];
-    session.hash = req.cookies[cookieHash];
+    // session.userId =
+    if (req.cookies) {
+      let keys = Object.keys(req.cookies);
+      var cookieHash = keys[0];
+      session.hash = req.cookies[cookieHash];
+    } else {
+      var cookieHash = 'shortlyid';
+    }
     return models.Sessions.get({hash: session.hash})
       .then( (data) => {
         if (!data) {
           req.session = {};
+          // session.userId = data.id;
           return models.Sessions.create()
             .then ( (sessionRecordHash) => {
               return models.Sessions.get({ id: sessionRecordHash.insertId })
                 .then((data) => {
                   req.session.hash = sessionRecordHash.hash;
-                  res.cookie(cookieHash, sessionRecordHash.hash);
+                  res.cookie(cookieHash, sessionRecordHash.hash, { 'domain': 'http://localhost4568/' });
                   next();
                 })
                 .catch((err) => {
@@ -83,20 +86,3 @@ module.exports.createSession = (req, res, next) => {
 /************************************************************/
 // Add additional authentication middleware functions below
 /************************************************************/
-
-
-// it('clears and reassigns a new cookie if there is no session assigned to the cookie', function(done) {
-//   var maliciousCookieHash = '8a864482005bcc8b968f2b18f8f7ea490e577b20';
-//   var response = httpMocks.createResponse();
-//   var requestWithMaliciousCookie = httpMocks.createRequest();
-//   requestWithMaliciousCookie.cookies.shortlyid = maliciousCookieHash;
-
-//   createSession(requestWithMaliciousCookie, response, function() {
-//     var cookie = response.cookies.shortlyid;
-//     expect(cookie).to.exist;
-//     expect(cookie).to.not.equal(maliciousCookieHash);
-//     done();
-//   });
-// });
-// });
-// });
