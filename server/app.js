@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
 const models = require('./models');
 const cookieParser = require('./middleware/cookieParser.js');
+// require('events').EventEmitter.defaultMaxListeners = 0;
 
 const app = express();
 
@@ -24,19 +25,26 @@ let cookies = function (req, res, next) {
   cookieParser(req, res, next);
 };
 
+let sessionVerify = function (req, res, next) {
+  console.log('step 1');
+  Auth.verifySession(req, res, next);
+};
+
 app.use(cookies);
 app.use(sessionCreator);
 
-app.get('/',
+app.get('/', Auth.verifySession,
+  (req, res) => {
+    console.log('step 4.2');
+    res.render('index');
+  });
+
+app.get('/create', Auth.verifySession,
   (req, res) => {
     res.render('index');
   });
 
-app.get('/create', (req, res) => {
-  res.render('index');
-});
-
-app.get('/links',
+app.get('/links', Auth.verifySession,
   (req, res, next) => {
     models.Links.getAll()
       .then(links => {
@@ -96,7 +104,6 @@ app.post('/signup',
         if (!data) {
           return models.Users.create(options)
             .then((data) => {
-              console.log('req.session.hash line 103', req.session.hash);
               return models.Sessions.update({hash: req.session.hash}, {userId: data.insertId})
                 .then( () => {
                   res.redirect(201, '/');
@@ -109,8 +116,7 @@ app.post('/signup',
               res.status(500).send(err);
             });
         } else if (data) {
-          console.log('req.body line 108', req.body);
-          res.redirect('/signup'); //shouldn't be able to use existing user login info
+          res.redirect('/signup');
           res.end();
         }
       })
@@ -119,8 +125,15 @@ app.post('/signup',
       });
   });
 
+app.get('/login',
+  (req, res) => {
+    console.log('req.res.path line 132 step 3.2: ', req.res.path);
+    res.render('login');
+  });
+
 app.post('/login',
   (req, res) => {
+    console.log('req.res line 139');
     return models.Users.get({username: req.body.username})
       .then((data) => {
         if (!data) {
@@ -130,6 +143,7 @@ app.post('/login',
           if (loginIsCorrect) {
             return models.Sessions.update({hash: req.session.hash}, {userId: data.insertId})
               .then( () => {
+                console.log('very bad');
                 res.redirect(201, '/');
               })
               .catch((err) => {
@@ -143,7 +157,6 @@ app.post('/login',
   });
 
 app.get('/logout', (req, res, next) => {
-  console.log('req.session 146', req.session);
   return models.Sessions.delete({hash: req.session.hash})
     .then( () => {
       res.clearCookie('shortlyId');
@@ -185,3 +198,13 @@ app.get('/:code', (req, res, next) => {
 });
 
 module.exports = app;
+
+//OUR TASK:
+// Authenticated Routes
+//  Add a verifySession helper function to all server routes that require login, redirect the user
+//to a login page as needed.
+//Require users to log in to see shortened links and create new ones. Do NOT require the user to login
+//when using a previously shortened link.
+//  Give the user a way to log out. What will this need to do to the server session and the cookie saved to the
+//client's browser?
+// Commit your progress: "Complete Authenticated Routes"

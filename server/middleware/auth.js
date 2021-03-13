@@ -1,6 +1,8 @@
 const models = require('../models');
 const Promise = require('bluebird');
-//
+const express = require('express');
+const app = require('../app.js');
+
 module.exports.createSession = (req, res, next) => {
   if (JSON.stringify(req.cookies) === '{}') {
     return models.Sessions.create()
@@ -9,8 +11,8 @@ module.exports.createSession = (req, res, next) => {
         return models.Sessions.get({ id: data.insertId })
           .then((dataFromGet) => {
             req.session.hash = dataFromGet.hash;
-            req.session.user = {};
-            req.session.username = req.body.username;
+            // req.session.user = {};
+            // req.session.username = req.body.username;
             res.cookie('shortlyid', dataFromGet.hash);
             next();
           })
@@ -29,9 +31,6 @@ module.exports.createSession = (req, res, next) => {
       .then((data) => {
         if (!data) {
           req.session = {};
-          // req.session.user.username = req.body.username;
-          // console.log('req.body line 35', req.body);
-          // console.log('req.session.user.username line 34: ', req.session.user.username);
           return models.Sessions.create()
             .then((sessionRecordHash) => {
               var insert = sessionRecordHash.insertId;
@@ -40,7 +39,6 @@ module.exports.createSession = (req, res, next) => {
                   req.session.hash = data.hash;
                   req.session.user = {};
                   req.session.user.username = '';
-                  console.log('insert: ', insert);
                   return models.Users.get( {id: insert})
                     .then( (data) => {
                       if (data) {
@@ -58,7 +56,6 @@ module.exports.createSession = (req, res, next) => {
                 });
               req.session.hash = sessionRecordHash.hash;
               res.cookie(cookieHash, sessionRecordHash.hash);
-              console.log('req.session line 40: ', req.session);
               next();
             })
             .catch((err) => {
@@ -78,7 +75,6 @@ module.exports.createSession = (req, res, next) => {
                     session.user = {};
                     session.user.username = userData.username;
                     req.session = session;
-                    console.log('req.session line 74: ', req.session);
                     next();
                   }
                 })
@@ -98,7 +94,30 @@ module.exports.createSession = (req, res, next) => {
   }
 };
 
-
 /************************************************************/
 // Add additional authentication middleware functions below
 /************************************************************/
+
+//req and res here are referenced globally maybe?
+module.exports.verifySession = (req, res, next) => {
+  console.log('step 2');
+  // console.log('req.session: ', req.session);
+  // if (JSON.stringify(req.session.username) === undefined || JSON.stringify(req.session.user.username) === '' || JSON.stringify(req.session.user) === '{}' || models.Sessions.isLoggedIn(req.session) === false) {
+  //   console.log('in 102');
+  //   res.redirect(201, '/login');
+  // } else if (models.Sessions.isLoggedIn(req.session) === true) {
+  //   console.log('is logged in 105');
+  //   next();
+  // }
+  if (models.Sessions.isLoggedIn(req.session) === false) {
+    // res.redirect(201, 'http://localhost:4568/login');
+    console.log('line 111 auth is not logged in step 3');
+    // res.req.path = '/login';
+    res.redirect(302, '/login');
+    // app.get('/login');
+  } else {
+    console.log('line 113 auth is logged in step 4');
+    next();
+  }
+};
+

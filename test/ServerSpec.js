@@ -62,6 +62,7 @@ describe('', function() {
   });
 
   describe('Database Schema:', function() {
+    console.log('db', db);
     it('contains a users table', function(done) {
       var queryString = 'SELECT * FROM users';
       db.query(queryString, function(err, results) {
@@ -517,13 +518,6 @@ describe('', function() {
       });
     });
 
-    //think abt whats happening between a session and a cookie
-
-    //having dealt with sessions, now deal with cookies
-    //research web sequence diagram
-    //understand flow from (cookie to) session to cookie
-    //DIAGRAM IT OUT
-
     it('sets and stores a cookie on the client', function(done) {
       requestWithSession('http://127.0.0.1:4568/', function(error, res, body) {
         if (error) { return done(error); }
@@ -544,7 +538,6 @@ describe('', function() {
           WHERE sessions.hash = ? AND users.id = sessions.userId
         `;
 
-        console.log('cookieValue', cookieValue);
         db.query(queryString, cookieValue, function(error, users) {
           if (error) { return done(error); }
           var user = users[0];
@@ -578,7 +571,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Privileged Access:', function() {
+  describe('Privileged Access:', function() {
 
     it('Redirects to login page if a user tries to access the main page and is not signed in', function(done) {
       request('http://127.0.0.1:4568/', function(error, res, body) {
@@ -605,7 +598,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Link creation:', function() {
+  describe('Link creation:', function() {
 
     var cookies = request.jar();
     var requestWithSession = request.defaults({ jar: cookies });
