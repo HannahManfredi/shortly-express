@@ -544,6 +544,7 @@ describe('', function() {
           WHERE sessions.hash = ? AND users.id = sessions.userId
         `;
 
+        console.log('cookieValue', cookieValue);
         db.query(queryString, cookieValue, function(error, users) {
           if (error) { return done(error); }
           var user = users[0];

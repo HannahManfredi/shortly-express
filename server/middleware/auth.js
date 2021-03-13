@@ -9,6 +9,8 @@ module.exports.createSession = (req, res, next) => {
         return models.Sessions.get({ id: data.insertId })
           .then((dataFromGet) => {
             req.session.hash = dataFromGet.hash;
+            req.session.user = {};
+            req.session.username = req.body.username;
             res.cookie('shortlyid', dataFromGet.hash);
             next();
           })
@@ -21,37 +23,50 @@ module.exports.createSession = (req, res, next) => {
       });
   } else {
     let session = {};
-    // session.userId =
-    if (req.cookies) {
-      let keys = Object.keys(req.cookies);
-      var cookieHash = keys[0];
-      session.hash = req.cookies[cookieHash];
-    } else {
-      var cookieHash = 'shortlyid';
-    }
-    return models.Sessions.get({hash: session.hash})
-      .then( (data) => {
+    var cookieHash = 'shortlyid';
+    session.hash = req.cookies[cookieHash];
+    return models.Sessions.get({ hash: session.hash })
+      .then((data) => {
         if (!data) {
           req.session = {};
-          // session.userId = data.id;
+          // req.session.user.username = req.body.username;
+          // console.log('req.body line 35', req.body);
+          // console.log('req.session.user.username line 34: ', req.session.user.username);
           return models.Sessions.create()
-            .then ( (sessionRecordHash) => {
+            .then((sessionRecordHash) => {
+              var insert = sessionRecordHash.insertId;
               return models.Sessions.get({ id: sessionRecordHash.insertId })
                 .then((data) => {
-                  req.session.hash = sessionRecordHash.hash;
-                  res.cookie(cookieHash, sessionRecordHash.hash, { 'domain': 'http://localhost4568/' });
-                  next();
+                  req.session.hash = data.hash;
+                  req.session.user = {};
+                  req.session.user.username = '';
+                  console.log('insert: ', insert);
+                  return models.Users.get( {id: insert})
+                    .then( (data) => {
+                      if (data) {
+                        req.session.user.username = data.username;
+                      }
+                      res.cookie(cookieHash, sessionRecordHash.hash);
+                      next();
+                    })
+                    .catch( (err) => {
+                      throw err;
+                    });
                 })
                 .catch((err) => {
                   throw (err);
                 });
+              req.session.hash = sessionRecordHash.hash;
+              res.cookie(cookieHash, sessionRecordHash.hash);
+              console.log('req.session line 40: ', req.session);
+              next();
             })
-            .catch( (err) => {
+            .catch((err) => {
               throw (err);
             });
-        } else {
+        } else if (data) {
           let idWeNeed = data.id;
-          return models.Sessions.update({hash: session.hash}, {userId: data.id})
+          return models.Sessions.update({userId: null}, {userId: data.id})
             .then( (updateData) => {
               return models.Users.get({id: idWeNeed})
                 .then( (userData) => {
@@ -63,6 +78,7 @@ module.exports.createSession = (req, res, next) => {
                     session.user = {};
                     session.user.username = userData.username;
                     req.session = session;
+                    console.log('req.session line 74: ', req.session);
                     next();
                   }
                 })

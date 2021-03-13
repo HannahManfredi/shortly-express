@@ -93,17 +93,24 @@ app.post('/signup',
     options.password = req.body.password;
     return models.Users.get({username: req.body.username})
       .then((data) => {
-        if (data === undefined) {
+        if (!data) {
           return models.Users.create(options)
-            .then(() => {
-              res.redirect(201, '/');
-              res.end();
+            .then((data) => {
+              console.log('req.session.hash line 103', req.session.hash);
+              return models.Sessions.update({hash: req.session.hash}, {userId: data.insertId})
+                .then( () => {
+                  res.redirect(201, '/');
+                })
+                .catch ( (err) => {
+                  throw err;
+                });
             })
             .catch((err) => {
               res.status(500).send(err);
             });
         } else if (data) {
-          res.redirect('/signup');
+          console.log('req.body line 108', req.body);
+          res.redirect('/signup'); //shouldn't be able to use existing user login info
           res.end();
         }
       })
@@ -121,13 +128,31 @@ app.post('/login',
         } else if (data) {
           let loginIsCorrect = models.Users.compare(req.body.password, data.password, data.salt);
           if (loginIsCorrect) {
-            res.redirect(201, '/');
+            return models.Sessions.update({hash: req.session.hash}, {userId: data.insertId})
+              .then( () => {
+                res.redirect(201, '/');
+              })
+              .catch((err) => {
+                if (err) { throw err; }
+              });
           } else {
             res.redirect(201, '/login');
           }
         }
       });
   });
+
+app.get('/logout', (req, res, next) => {
+  console.log('req.session 146', req.session);
+  return models.Sessions.delete({hash: req.session.hash})
+    .then( () => {
+      res.clearCookie('shortlyId');
+      next();
+    })
+    .catch((err) => {
+      if (err) { throw err; }
+    });
+});
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
