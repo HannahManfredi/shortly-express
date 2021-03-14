@@ -6,7 +6,6 @@ const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
 const models = require('./models');
 const cookieParser = require('./middleware/cookieParser.js');
-// require('events').EventEmitter.defaultMaxListeners = 0;
 
 const app = express();
 
@@ -26,7 +25,7 @@ let cookies = function (req, res, next) {
 };
 
 let sessionVerify = function (req, res, next) {
-  console.log('step 1');
+
   Auth.verifySession(req, res, next);
 };
 
@@ -35,7 +34,6 @@ app.use(sessionCreator);
 
 app.get('/', Auth.verifySession,
   (req, res) => {
-    console.log('step 4.2');
     res.render('index');
   });
 
@@ -127,13 +125,11 @@ app.post('/signup',
 
 app.get('/login',
   (req, res) => {
-    console.log('req.res.path line 132 step 3.2: ', req.res.path);
     res.render('login');
   });
 
 app.post('/login',
   (req, res) => {
-    console.log('req.res line 139');
     return models.Users.get({username: req.body.username})
       .then((data) => {
         if (!data) {
@@ -143,7 +139,6 @@ app.post('/login',
           if (loginIsCorrect) {
             return models.Sessions.update({hash: req.session.hash}, {userId: data.insertId})
               .then( () => {
-                console.log('very bad');
                 res.redirect(201, '/');
               })
               .catch((err) => {
@@ -198,13 +193,3 @@ app.get('/:code', (req, res, next) => {
 });
 
 module.exports = app;
-
-//OUR TASK:
-// Authenticated Routes
-//  Add a verifySession helper function to all server routes that require login, redirect the user
-//to a login page as needed.
-//Require users to log in to see shortened links and create new ones. Do NOT require the user to login
-//when using a previously shortened link.
-//  Give the user a way to log out. What will this need to do to the server session and the cookie saved to the
-//client's browser?
-// Commit your progress: "Complete Authenticated Routes"

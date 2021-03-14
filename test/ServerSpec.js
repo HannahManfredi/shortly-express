@@ -201,7 +201,9 @@ describe('', function() {
       };
 
       request(options, function(error, res, body) {
+        console.log('res.href: ', res.request.href);
         if (error) { return done(error); }
+        expect(res.request.href).to.equal('http://127.0.0.1:4568/signup');
         expect(res.headers.location).to.equal('/');
         done();
       });
@@ -235,14 +237,31 @@ describe('', function() {
         }
       };
 
-      request(options, function(error, res, body) {
+      request(options, function (error, res, body) {
+        var useridfromusers = 0;
+        let username = res.request.body.username;
+        let pword = res.request.body.password;
         if (error) { return done(error); }
-        expect(res.headers.location).to.equal('/');
-        done();
+        let queryString1 = 'select id from users where username = "Samantha"';
+        let queryString2 = 'select userId from sessions where userId = ?';
+
+        db.query(queryString1, username, function (err, rows) {
+          if (err) { return done(err); }
+          var user = rows[0];
+          useridfromusers = user.id;
+          expect(user.id).to.equal(1);
+          expect(res.headers.location).to.equal('/');
+          db.query(queryString2, useridfromusers, function (err, rows) {
+            if (err) { return done(err); }
+            var sessionRecord = rows[0].userId;
+            expect(sessionRecord).to.equal(1);
+            done();
+          });
+        });
       });
     });
 
-    it('Users that do not exist are kept on login page', function(done) {
+    it('Users that do not exist are kept on login page', function (done) {
       var options = {
         'method': 'POST',
         'uri': 'http://127.0.0.1:4568/login',
@@ -252,14 +271,14 @@ describe('', function() {
         }
       };
 
-      request(options, function(error, res, body) {
+      request(options, function (error, res, body) {
         if (error) { return done(error); }
         expect(res.headers.location).to.equal('/login');
         done();
       });
     });
 
-    it('Users that enter an incorrect password are kept on login page', function(done) {
+    it('Users that enter an incorrect password are kept on login page', function (done) {
       var options = {
         'method': 'POST',
         'uri': 'http://127.0.0.1:4568/login',
@@ -269,13 +288,14 @@ describe('', function() {
         }
       };
 
-      request(options, function(error, res, body) {
+      request(options, function (error, res, body) {
         if (error) { return done(error); }
         expect(res.headers.location).to.equal('/login');
         done();
       });
     });
   });
+
 
   describe('Sessions Schema:', function() {
     it('contains a sessions table', function(done) {
@@ -598,6 +618,16 @@ describe('', function() {
     });
   });
 
+  // describe('Jacob & Hannah\'s Tests', function() {
+  //   it('makes sure a logged in user\'s session obj has a userId', function(done) {
+  //     request('http://127.0.0.1:4568/links', function(error, res, body) {
+  //       if (error) { return done(error); }
+  //       expect(res.req.path).to.equal('/login');
+  //       done();
+  //     });
+  //   });
+  // };
+
   describe('Link creation:', function() {
 
     var cookies = request.jar();
@@ -763,4 +793,5 @@ describe('', function() {
       });
     });
   });
+
 });
